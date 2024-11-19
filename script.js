@@ -60,12 +60,80 @@ Promise.all([
   new Promise((resolve) => (backgroundImageSquare.onload = resolve)),
 ]).then(() => {
   generateButton.disabled = false;
+} );
+
+// Name validation function
+function validateName(name) {
+  // Remove leading/trailing whitespace
+  name = name.trim();
+
+  // Check length
+  if (name.length < 2 || name.length > 50) {
+    return false;
+  }
+
+  // Validate characters (allow letters, spaces, hyphens)
+  const nameRegex = /^[A-Za-z\s\-']+$/;
+  return nameRegex.test(name);
+}
+
+// Modify existing event listeners
+
+// Add input validation to name input
+nameInput.addEventListener('input', function() {
+  const name = this.value;
+
+  // Optional: Real-time validation indication
+  if (name && !validateName(name)) {
+    this.setCustomValidity("Name should be 2-50 characters, using only letters, spaces, and hyphens");
+    this.reportValidity();
+  } else {
+    this.setCustomValidity("");
+  }
+});
+
+// Modify image input to only accept specific file types
+imageInput.addEventListener('change', function() {
+  const file = imageInput.files[0];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const maxFileSize = 5 * 1024 * 1024; // 5MB file size limit
+
+  const fileName = file ? file.name : ""; // Get file name
+  if (fileName) {
+    fileNameDisplay.textContent = `${fileName}`; // Display file name
+  } else {
+    fileNameDisplay.textContent = ""; // Clear file name if no file selected
+  }
+
+  // Validate file type and size
+  if (file) {
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please upload only JPG, JPEG, or PNG images.");
+      this.value = ''; // Clear the file input
+      fileNameDisplay.textContent = '';
+      return;
+    }
+
+    // Validate file size
+    if (file.size > maxFileSize) {
+      alert("File size should not exceed 5MB.");
+      this.value = ''; // Clear the file input
+      fileNameDisplay.textContent = '';
+      return;
+    }
+  }
 });
 
 function generateGraphic() {
   const name = nameInput.value.trim();
   const file = imageInput.files[0];
   const nameColor = "#000000";
+
+  // Additional name validation before generating
+  if (!validateName(name)) {
+    alert("Please enter a valid name (2-50 characters, letters only)");
+    return;
+  }
 
   if (!name || !file) {
     alert("Please enter your name and upload a profile picture");
@@ -154,7 +222,7 @@ function generateGraphic() {
       downloadButton.style.display = "block";
 
       generateButton.classList.remove("loading");
-      generateButton.textContent = "Generate Graphic";
+      generateButton.textContent = "Get My Graphics";
     };
     profileImage.src = e.target.result;
   };
