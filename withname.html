@@ -18,22 +18,23 @@
 					Get ready to showcase your excitement for Wireframed 2024! </br> </br> Create your personalized
 					<span style="color: #0700d2; font-weight: 500;">I Am Attending</span>
 					graphic to share across social media and let
-					everyone know you're part of Mumbai's premier design celebration. See you at Wireframed 2024!
+					everyone know you’re part of Mumbai’s premier design celebration. See you at Wireframed 2024!
 				</p>
 			</div>
-
+			<input type="text" id="nameInput" placeholder="Enter Your Name" required>
 			<div class="file-input-wrapper">
 				<input type="file" id="imageInput" accept="image/*" required>
-				<label for="imageInput" class="custom-file-input">Add My Flair</label>
+				<label for="imageInput" class="custom-file-input">Choose Image</label>
 				<span id="file-name" class="file-name"></span>
 			</div>
+
 
 			<button id="generateButton">Get My Graphics</button>
 			<button id="downloadButton" style="display:none;">Download Graphics</button>
 			<div class="preview-container">
 				<div class="preview-wrapper">
 					<p id="square-template-text" style="display:none; color: #0034ef; font-size: 1rem;">Ideal for
-						LinkedIn, X (fka Twitter), Instagram posts</p>
+						Linkedin, X (fka Twitter), Instagram posts</p>
 					<img id="preview-square" alt="Generated Square Graphic">
 				</div>
 				<div class="preview-wrapper">
@@ -45,11 +46,13 @@
 		</div>
 	</div>
 
+
+
 	<canvas id="canvas"></canvas>
 	<footer>
 		<p>© FOF MUMBAI. All right reserved.</p>
 	</footer>
-	<script src="script.js"></script>
+	<script src="withname.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 	<script>
 		document.getElementById( 'generateButton' ).addEventListener( 'click', function () {

@@ -1,12 +1,24 @@
-// Updated script for image-only graphic generation
+// Get the file input element and the span to show the file name
+const fileInput = document.getElementById("imageInput");
+const fileNameDisplay = document.getElementById("file-name");
 
+// Listen for changes in the file input
+fileInput.addEventListener("change", function () {
+  const fileName = fileInput.files[0] ? fileInput.files[0].name : ""; // Get file name
+  if (fileName) {
+    fileNameDisplay.textContent = `${fileName}`; // Display file name
+  } else {
+    fileNameDisplay.textContent = ""; // Clear file name if no file selected
+  }
+});
+
+const nameInput = document.getElementById("nameInput");
 const imageInput = document.getElementById("imageInput");
 const generateButton = document.getElementById("generateButton");
 const downloadButton = document.getElementById("downloadButton");
 const canvas = document.getElementById("canvas");
 const preview = document.getElementById("preview");
 const ctx = canvas.getContext("2d", { alpha: true });
-const fileNameDisplay = document.getElementById("file-name");
 
 // Create separate high-resolution canvases for both templates
 const outputCanvasVertical = document.createElement("canvas");
@@ -37,16 +49,53 @@ backgroundImageVertical.src = "template.png";
 backgroundImageVertical.crossOrigin = "Anonymous";
 
 let backgroundImageSquare = new Image();
-backgroundImageSquare.src = "template-square.png";
+backgroundImageSquare.src = "template-square.png"; // Add a new square template image
 backgroundImageSquare.crossOrigin = "Anonymous";
 
 generateButton.addEventListener("click", generateGraphic);
 downloadButton.addEventListener("click", downloadImages);
 
+Promise.all([
+  new Promise((resolve) => (backgroundImageVertical.onload = resolve)),
+  new Promise((resolve) => (backgroundImageSquare.onload = resolve)),
+]).then(() => {
+  generateButton.disabled = false;
+} );
+
+// Name validation function
+function validateName(name) {
+  // Remove leading/trailing whitespace
+  name = name.trim();
+
+  // Check length
+  if (name.length < 2 || name.length > 50) {
+    return false;
+  }
+
+  // Validate characters (allow letters, spaces, hyphens)
+  const nameRegex = /^[A-Za-z\s\-']+$/;
+  return nameRegex.test(name);
+}
+
+// Modify existing event listeners
+
+// Add input validation to name input
+nameInput.addEventListener('input', function() {
+  const name = this.value;
+
+  // Optional: Real-time validation indication
+  if (name && !validateName(name)) {
+    this.setCustomValidity("Name should be 2-50 characters, using only letters, spaces, and hyphens");
+    this.reportValidity();
+  } else {
+    this.setCustomValidity("");
+  }
+});
+
 // Modify image input to only accept specific file types
-imageInput.addEventListener("change", function () {
+imageInput.addEventListener('change', function() {
   const file = imageInput.files[0];
-  const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   const maxFileSize = 5 * 1024 * 1024; // 5MB file size limit
 
   const fileName = file ? file.name : ""; // Get file name
@@ -60,33 +109,34 @@ imageInput.addEventListener("change", function () {
   if (file) {
     if (!allowedTypes.includes(file.type)) {
       alert("Please upload only JPG, JPEG, or PNG images.");
-      this.value = ""; // Clear the file input
-      fileNameDisplay.textContent = "";
+      this.value = ''; // Clear the file input
+      fileNameDisplay.textContent = '';
       return;
     }
 
     // Validate file size
     if (file.size > maxFileSize) {
       alert("File size should not exceed 5MB.");
-      this.value = ""; // Clear the file input
-      fileNameDisplay.textContent = "";
+      this.value = ''; // Clear the file input
+      fileNameDisplay.textContent = '';
       return;
     }
   }
 });
 
-Promise.all([
-  new Promise((resolve) => (backgroundImageVertical.onload = resolve)),
-  new Promise((resolve) => (backgroundImageSquare.onload = resolve)),
-]).then(() => {
-  generateButton.disabled = false;
-});
-
 function generateGraphic() {
+  const name = nameInput.value.trim();
   const file = imageInput.files[0];
+  const nameColor = "#000000";
 
-  if (!file) {
-    alert("Please upload a profile picture");
+  // Additional name validation before generating
+  if (!validateName(name)) {
+    alert("Please enter a valid name (2-50 characters, letters only)");
+    return;
+  }
+
+  if (!name || !file) {
+    alert("Please enter your name and upload a profile picture");
     return;
   }
 
@@ -105,9 +155,11 @@ function generateGraphic() {
         canvas.width,
         canvas.height,
         profileImage,
+        name,
+        nameColor,
+        true,
         backgroundImageVertical,
-        "vertical",
-        true
+        "vertical"
       );
 
       // Generate high-resolution vertical version
@@ -116,9 +168,11 @@ function generateGraphic() {
         outputCanvasVertical.width,
         outputCanvasVertical.height,
         profileImage,
+        name,
+        nameColor,
+        false,
         backgroundImageVertical,
-        "vertical",
-        false
+        "vertical"
       );
 
       // Generate high-resolution square version
@@ -127,9 +181,11 @@ function generateGraphic() {
         outputCanvasSquare.width,
         outputCanvasSquare.height,
         profileImage,
+        name,
+        nameColor,
+        false,
         backgroundImageSquare,
-        "square",
-        false
+        "square"
       );
 
       // Update previews
@@ -148,9 +204,11 @@ function generateGraphic() {
         1080,
         1080,
         profileImage,
+        name,
+        nameColor,
+        true,
         backgroundImageSquare,
-        "square",
-        true
+        "square"
       );
 
       const previewSquareDataUrl = previewSquareCanvas.toDataURL("image/png");
@@ -176,9 +234,11 @@ function generateVersion(
   width,
   height,
   profileImage,
+  name,
+  nameColor,
+  isPreview,
   backgroundImage,
-  templateType,
-  isPreview
+  templateType
 ) {
   context.clearRect(0, 0, width, height);
 
@@ -189,35 +249,23 @@ function generateVersion(
   const centerX = width / 2;
   const centerY =
     templateType === "vertical"
-      ? height * 0.327 // Vertical template
-      : height * 0.32; // Square template
+      ? height * 0.29 // Vertical template
+      : height * 0.25; // Square template
 
   // Adjust image size based on template type
   const size =
     templateType === "vertical"
       ? isPreview
-        ? 405
-        : 810 // Vertical template size
+        ? 360
+        : 720 // Vertical template size
       : isPreview
-      ? 324
-      : 648; // Larger image for square template
+      ? 240
+      : 480; // Larger image for square template
 
   // Calculate cropping dimensions
   let sourceSize = Math.min(profileImage.width, profileImage.height);
   let sourceX = (profileImage.width - sourceSize) / 2;
   let sourceY = (profileImage.height - sourceSize) / 2;
-
-  // Calculate border width proportional to image size
-  const borderWidth = isPreview ? 5 : 10;
-
-  // Draw black border
-  context.fillStyle = "#000000";
-  context.fillRect(
-    centerX - size / 2 - borderWidth,
-    centerY - size / 2 - borderWidth,
-    size + borderWidth * 2,
-    size + borderWidth * 2
-  );
 
   // Draw the cropped square image
   context.drawImage(
@@ -231,16 +279,44 @@ function generateVersion(
     size,
     size
   );
+
+  // Adjust font size based on template type
+  const fontSize =
+    templateType === "vertical"
+      ? isPreview
+        ? 80
+        : 160 // Vertical template font size
+      : isPreview
+      ? 60
+      : 120; // Smaller font for square template
+
+  // Draw name with scaled font settings
+  context.font = `400 ${fontSize}px "Poppins"`;
+  context.textAlign = "center";
+  context.fillStyle = nameColor;
+
+  const textY =
+    templateType === "vertical"
+      ? centerY + size / 2 + (isPreview ? 190 : 380) // Vertical template
+      : centerY + size / 2 + (isPreview ? 130 : 260); // Adjusted for square template
+
+  context.fillText(name, centerX, textY);
 }
 
 function downloadImages() {
   const verticalLink = document.createElement("a");
-  verticalLink.download = `Wireframed2024_story.png`;
+  verticalLink.download = `Wireframed2024_${nameInput.value.replace(
+    /\s+/g,
+    "_"
+  )}_vertical.png`;
   verticalLink.href = outputCanvasVertical.toDataURL("image/png", 1.0);
   verticalLink.click();
 
   const squareLink = document.createElement("a");
-  squareLink.download = `Wireframed2024_post.png`;
+  squareLink.download = `Wireframed2024_${nameInput.value.replace(
+    /\s+/g,
+    "_"
+  )}_square.png`;
   squareLink.href = outputCanvasSquare.toDataURL("image/png", 1.0);
   squareLink.click();
 }
