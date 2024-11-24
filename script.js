@@ -189,15 +189,15 @@ function generateVersion(
   const centerX = width / 2;
   const centerY =
     templateType === "vertical"
-      ? height * 0.327 // Vertical template
+      ? height * 0.3838 // Vertical template
       : height * 0.32; // Square template
 
   // Adjust image size based on template type
   const size =
     templateType === "vertical"
       ? isPreview
-        ? 405
-        : 810 // Vertical template size
+        ? 670
+        : 1340 // Vertical template size
       : isPreview
       ? 324
       : 648; // Larger image for square template
@@ -208,7 +208,7 @@ function generateVersion(
   let sourceY = (profileImage.height - sourceSize) / 2;
 
   // Calculate border width proportional to image size
-  const borderWidth = isPreview ? 5 : 10;
+  const borderWidth = isPreview ? 0 : 0;
 
   // Draw black border
   context.fillStyle = "#000000";
