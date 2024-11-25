@@ -190,7 +190,7 @@ function generateVersion(
   const centerY =
     templateType === "vertical"
       ? height * 0.3838 // Vertical template
-      : height * 0.32; // Square template
+      : height * 0.438; // Square template
 
   // Adjust image size based on template type
   const size =
@@ -199,8 +199,8 @@ function generateVersion(
         ? 670
         : 1340 // Vertical template size
       : isPreview
-      ? 324
-      : 648; // Larger image for square template
+      ? 385
+      : 770; // Larger image for square template
 
   // Calculate cropping dimensions
   let sourceSize = Math.min(profileImage.width, profileImage.height);
