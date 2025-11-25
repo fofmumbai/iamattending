@@ -24,7 +24,7 @@ canvas.height = 1920;
 outputCanvasVertical.width = 1080 * 2; // Vertical template
 outputCanvasVertical.height = 1920 * 2;
 outputCanvasSquare.width = 1080 * 2; // Square template
-outputCanvasSquare.height = 1080 * 2;
+outputCanvasSquare.height = 1440 * 2;
 
 // Enable image smoothing for all canvases
 [ctx, outputCtxVertical, outputCtxSquare].forEach((context) => {
@@ -141,12 +141,12 @@ function generateGraphic() {
       const previewSquareCanvas = document.createElement("canvas");
       const previewSquareCtx = previewSquareCanvas.getContext("2d");
       previewSquareCanvas.width = 1080;
-      previewSquareCanvas.height = 1080;
+      previewSquareCanvas.height = 1440;
 
       generateVersion(
         previewSquareCtx,
         1080,
-        1080,
+        1440,
         profileImage,
         backgroundImageSquare,
         "square",
@@ -186,21 +186,21 @@ function generateVersion(
   context.drawImage(backgroundImage, 0, 0, width, height);
 
   // Calculate dimensions for square crop with different sizes for templates
-  const centerX = width / 2;
+  const centerX = width / 3.35;
   const centerY =
     templateType === "vertical"
-      ? height * 0.3838 // Vertical template
-      : height * 0.438; // Square template
+      ? height * 0.4738 // Vertical template
+      : height * 0.435; // Square template
 
   // Adjust image size based on template type
   const size =
     templateType === "vertical"
       ? isPreview
-        ? 670
-        : 1340 // Vertical template size
+        ? 410
+        : 820 // Vertical template size
       : isPreview
-      ? 385
-      : 770; // Larger image for square template
+      ? 360
+      : 720; // Larger image for square template
 
   // Calculate cropping dimensions
   let sourceSize = Math.min(profileImage.width, profileImage.height);
@@ -211,7 +211,7 @@ function generateVersion(
   const borderWidth = isPreview ? 0 : 0;
 
   // Draw black border
-  context.fillStyle = "#000000";
+  context.fillStyle = "#ffffff";
   context.fillRect(
     centerX - size / 2 - borderWidth,
     centerY - size / 2 - borderWidth,
