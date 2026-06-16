@@ -280,6 +280,9 @@ function generateVersion(
     size
   );
 
+  // Apply black & white + grain effect over the photo area
+  applyMonoGrain(context, centerX - size / 2, centerY - size / 2, size, size);
+
   // Adjust font size based on template type
   const fontSize =
     templateType === "vertical"
@@ -301,6 +304,37 @@ function generateVersion(
       : centerY + size / 2 + (isPreview ? 130 : 260); // Adjusted for square template
 
   context.fillText(name, centerX, textY);
+}
+
+// Convert a region of the canvas to high-contrast black & white with film grain
+function applyMonoGrain(context, x, y, w, h) {
+  x = Math.max(0, Math.round(x));
+  y = Math.max(0, Math.round(y));
+  w = Math.round(w);
+  h = Math.round(h);
+
+  const contrast = 30; // higher = punchier blacks/whites
+  const brightness = 45; // positive = lighter overall
+  const grain = 65; // amount of per-pixel noise
+
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  const imageData = context.getImageData(x, y, w, h);
+  const d = imageData.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    // Luminance-weighted grayscale
+    let v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    // Contrast around mid-gray
+    v = factor * (v - 128) + 128;
+    // Brightness lift
+    v += brightness;
+    // Film grain
+    v += (Math.random() - 0.5) * grain;
+    v = v < 0 ? 0 : v > 255 ? 255 : v;
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+
+  context.putImageData(imageData, x, y);
 }
 
 function downloadImages() {

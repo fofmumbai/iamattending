@@ -33,11 +33,11 @@ outputCanvasSquare.height = 1440 * 2;
 });
 
 let backgroundImageVertical = new Image();
-backgroundImageVertical.src = "template.png";
+backgroundImageVertical.src = "config26story.png";
 backgroundImageVertical.crossOrigin = "Anonymous";
 
 let backgroundImageSquare = new Image();
-backgroundImageSquare.src = "template-square.png";
+backgroundImageSquare.src = "config26post.png";
 backgroundImageSquare.crossOrigin = "Anonymous";
 
 generateButton.addEventListener("click", generateGraphic);
@@ -185,22 +185,17 @@ function generateVersion(
   // Draw background template
   context.drawImage(backgroundImage, 0, 0, width, height);
 
-  // Calculate dimensions for square crop with different sizes for templates
-  const centerX = width / 3.35;
+  // Position the photo inside the white box of each template (fraction-based,
+  // so it scales correctly for both preview and high-res output canvases).
+  const centerX = width * 0.4991;
   const centerY =
     templateType === "vertical"
-      ? height * 0.4738 // Vertical template
-      : height * 0.435; // Square template
+      ? height * 0.434 // story template
+      : height * 0.4785; // post template
 
-  // Adjust image size based on template type
-  const size =
-    templateType === "vertical"
-      ? isPreview
-        ? 410
-        : 820 // Vertical template size
-      : isPreview
-      ? 360
-      : 720; // Larger image for square template
+  // Box is square; size slightly overscanned to avoid a white seam at edges.
+  const boxWidthFrac = templateType === "vertical" ? 0.4991 : 0.4981;
+  const size = width * boxWidthFrac * 1.01;
 
   // Calculate cropping dimensions
   let sourceSize = Math.min(profileImage.width, profileImage.height);
@@ -231,16 +226,50 @@ function generateVersion(
     size,
     size
   );
+
+  // Apply black & white + grain effect over the photo area
+  applyMonoGrain(context, centerX - size / 2, centerY - size / 2, size, size);
+}
+
+// Convert a region of the canvas to high-contrast black & white with film grain
+function applyMonoGrain(context, x, y, w, h) {
+  x = Math.max(0, Math.round(x));
+  y = Math.max(0, Math.round(y));
+  w = Math.round(w);
+  h = Math.round(h);
+
+  const contrast = 30; // higher = punchier blacks/whites
+  const brightness = 45; // positive = lighter overall
+  const grain = 65; // amount of per-pixel noise
+
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  const imageData = context.getImageData(x, y, w, h);
+  const d = imageData.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    // Luminance-weighted grayscale
+    let v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    // Contrast around mid-gray
+    v = factor * (v - 128) + 128;
+    // Brightness lift
+    v += brightness;
+    // Film grain
+    v += (Math.random() - 0.5) * grain;
+    v = v < 0 ? 0 : v > 255 ? 255 : v;
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+
+  context.putImageData(imageData, x, y);
 }
 
 function downloadImages() {
   const verticalLink = document.createElement("a");
-  verticalLink.download = `Wireframed2024_story.png`;
+  verticalLink.download = `Config2026_story.png`;
   verticalLink.href = outputCanvasVertical.toDataURL("image/png", 1.0);
   verticalLink.click();
 
   const squareLink = document.createElement("a");
-  squareLink.download = `Wireframed2024_post.png`;
+  squareLink.download = `Config2026_post.png`;
   squareLink.href = outputCanvasSquare.toDataURL("image/png", 1.0);
   squareLink.click();
 }
