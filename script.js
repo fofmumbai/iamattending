@@ -40,6 +40,11 @@ let backgroundImageSquare = new Image();
 backgroundImageSquare.src = "config26post.png";
 backgroundImageSquare.crossOrigin = "Anonymous";
 
+// "I Am Attending" sticker drawn on top of the photo
+let stickerImage = new Image();
+stickerImage.src = "attending.png";
+stickerImage.crossOrigin = "Anonymous";
+
 generateButton.addEventListener("click", generateGraphic);
 downloadButton.addEventListener("click", downloadImages);
 
@@ -78,6 +83,7 @@ imageInput.addEventListener("change", function () {
 Promise.all([
   new Promise((resolve) => (backgroundImageVertical.onload = resolve)),
   new Promise((resolve) => (backgroundImageSquare.onload = resolve)),
+  new Promise((resolve) => (stickerImage.onload = resolve)),
 ]).then(() => {
   generateButton.disabled = false;
 });
@@ -187,14 +193,14 @@ function generateVersion(
 
   // Position the photo inside the white box of each template (fraction-based,
   // so it scales correctly for both preview and high-res output canvases).
-  const centerX = width * 0.4991;
+  const centerX = width * (templateType === "vertical" ? 0.4998 : 0.4991);
   const centerY =
     templateType === "vertical"
-      ? height * 0.434 // story template
-      : height * 0.4785; // post template
+      ? height * 0.4126 // story template
+      : height * 0.4182; // post template
 
   // Box is square; size slightly overscanned to avoid a white seam at edges.
-  const boxWidthFrac = templateType === "vertical" ? 0.4991 : 0.4981;
+  const boxWidthFrac = templateType === "vertical" ? 0.4995 : 0.4991;
   const size = width * boxWidthFrac * 1.01;
 
   // Calculate cropping dimensions
@@ -229,6 +235,37 @@ function generateVersion(
 
   // Apply black & white + grain effect over the photo area
   applyMonoGrain(context, centerX - size / 2, centerY - size / 2, size, size);
+
+  // Redraw the "I Am Attending" sticker on top so it overlaps the photo,
+  // matching where it sits baked into the template.
+  drawSticker(context, width, height, templateType);
+}
+
+// Draw attending.png on top, aligned to the baked-in sticker position.
+function drawSticker(context, width, height, templateType) {
+  // Native sticker geometry (attending.png): canvas + opaque content bounds
+  const NATIVE_W = 1776;
+  const NATIVE_H = 864;
+  const CONTENT_X = 18; // opaque content left within native canvas
+  const CONTENT_Y = 14; // opaque content top
+  const CONTENT_W = 1735; // opaque content width
+
+  // Target placement of the visible sticker, as fractions of the canvas
+  const stk =
+    templateType === "vertical"
+      ? { cxFrac: 0.4998, topFrac: 0.2141, wFrac: 0.3208 } // story
+      : { cxFrac: 0.4991, topFrac: 0.1535, wFrac: 0.3204 }; // post
+
+  const targetContentW = stk.wFrac * width;
+  const scale = targetContentW / CONTENT_W;
+  const drawW = NATIVE_W * scale;
+  const drawH = NATIVE_H * scale;
+  const contentLeft = stk.cxFrac * width - targetContentW / 2;
+  const contentTop = stk.topFrac * height;
+  const drawX = contentLeft - CONTENT_X * scale;
+  const drawY = contentTop - CONTENT_Y * scale;
+
+  context.drawImage(stickerImage, drawX, drawY, drawW, drawH);
 }
 
 // Convert a region of the canvas to high-contrast black & white with film grain
