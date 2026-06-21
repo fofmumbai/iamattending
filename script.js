@@ -40,10 +40,28 @@ let backgroundImageSquare = new Image();
 backgroundImageSquare.src = "config26post.png";
 backgroundImageSquare.crossOrigin = "Anonymous";
 
-// "I Am Attending" sticker drawn on top of the photo
+// Round MUMBAI badge drawn on top of the photo
 let stickerImage = new Image();
-stickerImage.src = "attending.png";
+stickerImage.src = "fofsticker.png";
 stickerImage.crossOrigin = "Anonymous";
+
+// ── Layout config — all values are fractions of the template canvas ──────────
+//   photo:   cx/cy = center of the white photo box, size = box width
+//   sticker: cx/cy = center of the sticker artwork, w = its width
+// Currently set for the OLD config26 templates (sticker baked in at the top).
+// Values measured from the actual config26 template PNGs. The MUMBAI badge is
+// baked into the template at the bottom edge of the photo box; the photo covers
+// it, so the sticker entry redraws the same badge on top at the same spot.
+const LAYOUT = {
+  vertical: {
+    photo: { cx: 0.4998, cy: 0.4508, size: 0.4995 },
+    sticker: { cx: 0.4998, cy: 0.5911, w: 0.132 },
+  },
+  square: {
+    photo: { cx: 0.4998, cy: 0.4962, size: 0.4995 },
+    sticker: { cx: 0.4998, cy: 0.6823, w: 0.132 },
+  },
+};
 
 generateButton.addEventListener("click", generateGraphic);
 downloadButton.addEventListener("click", downloadImages);
@@ -80,11 +98,30 @@ imageInput.addEventListener("change", function () {
   }
 });
 
+// Resolve on load; on error, flag the missing file instead of hanging forever.
+const missingAssets = [];
+function whenLoaded(img) {
+  return new Promise((resolve) => {
+    img.onload = resolve;
+    img.onerror = () => {
+      missingAssets.push(img.src);
+      resolve();
+    };
+  });
+}
+
 Promise.all([
-  new Promise((resolve) => (backgroundImageVertical.onload = resolve)),
-  new Promise((resolve) => (backgroundImageSquare.onload = resolve)),
-  new Promise((resolve) => (stickerImage.onload = resolve)),
+  whenLoaded(backgroundImageVertical),
+  whenLoaded(backgroundImageSquare),
+  whenLoaded(stickerImage),
 ]).then(() => {
+  if (missingAssets.length) {
+    const list = missingAssets.join(", ");
+    console.error("Missing template assets:", list);
+    fileNameDisplay.textContent = `Missing files: ${list}`;
+    fileNameDisplay.style.color = "#e53935";
+  }
+  // Enable anyway so the failure is obvious on click rather than a dead button.
   generateButton.disabled = false;
 });
 
@@ -193,15 +230,12 @@ function generateVersion(
 
   // Position the photo inside the white box of each template (fraction-based,
   // so it scales correctly for both preview and high-res output canvases).
-  const centerX = width * (templateType === "vertical" ? 0.4998 : 0.4991);
-  const centerY =
-    templateType === "vertical"
-      ? height * 0.4126 // story template
-      : height * 0.4182; // post template
+  const box = LAYOUT[templateType].photo;
+  const centerX = width * box.cx;
+  const centerY = height * box.cy;
 
-  // Box is square; size slightly overscanned to avoid a white seam at edges.
-  const boxWidthFrac = templateType === "vertical" ? 0.4995 : 0.4991;
-  const size = width * boxWidthFrac * 1.01;
+  // Box is square; tiny overscan avoids a white seam at the edges.
+  const size = width * box.size * 1.01;
 
   // Calculate cropping dimensions
   let sourceSize = Math.min(profileImage.width, profileImage.height);
@@ -241,27 +275,30 @@ function generateVersion(
   drawSticker(context, width, height, templateType);
 }
 
-// Draw attending.png on top, aligned to the baked-in sticker position.
+// Draw attending.png on top, centered on the bottom edge of the photo box so
+// it overlaps the lower part of the user's photo.
 function drawSticker(context, width, height, templateType) {
-  // Native sticker geometry (attending.png): canvas + opaque content bounds
-  const NATIVE_W = 1776;
-  const NATIVE_H = 864;
-  const CONTENT_X = 18; // opaque content left within native canvas
-  const CONTENT_Y = 14; // opaque content top
-  const CONTENT_W = 1735; // opaque content width
+  // Native sticker geometry (fofsticker.png): square, full-bleed badge
+  const NATIVE_W = 1155;
+  const NATIVE_H = 1155;
+  const CONTENT_X = 0; // content fills the whole canvas
+  const CONTENT_Y = 0;
+  const CONTENT_W = 1155;
+  const CONTENT_H = 1155;
 
-  // Target placement of the visible sticker, as fractions of the canvas
-  const stk =
-    templateType === "vertical"
-      ? { cxFrac: 0.4998, topFrac: 0.2141, wFrac: 0.3208 } // story
-      : { cxFrac: 0.4991, topFrac: 0.1535, wFrac: 0.3204 }; // post
+  // Skip if the sticker image failed to load — drawing a broken image throws
+  // and would abort the whole render.
+  if (!stickerImage.complete || stickerImage.naturalWidth === 0) return;
 
-  const targetContentW = stk.wFrac * width;
+  const stk = LAYOUT[templateType].sticker;
+  const targetContentW = stk.w * width;
   const scale = targetContentW / CONTENT_W;
   const drawW = NATIVE_W * scale;
   const drawH = NATIVE_H * scale;
-  const contentLeft = stk.cxFrac * width - targetContentW / 2;
-  const contentTop = stk.topFrac * height;
+
+  // Center the sticker's visible artwork on (cx, cy).
+  const contentLeft = stk.cx * width - targetContentW / 2;
+  const contentTop = stk.cy * height - (CONTENT_H * scale) / 2;
   const drawX = contentLeft - CONTENT_X * scale;
   const drawY = contentTop - CONTENT_Y * scale;
 
