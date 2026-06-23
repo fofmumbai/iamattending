@@ -2,7 +2,9 @@
 
 const imageInput = document.getElementById("imageInput");
 const generateButton = document.getElementById("generateButton");
-const downloadButton = document.getElementById("downloadButton");
+const downloadButtons = document.getElementById("downloadButtons");
+const downloadPostButton = document.getElementById("downloadPostButton");
+const downloadStoryButton = document.getElementById("downloadStoryButton");
 const canvas = document.getElementById("canvas");
 const preview = document.getElementById("preview");
 const ctx = canvas.getContext("2d", { alpha: true });
@@ -64,7 +66,8 @@ const LAYOUT = {
 };
 
 generateButton.addEventListener("click", generateGraphic);
-downloadButton.addEventListener("click", downloadImages);
+downloadPostButton.addEventListener("click", downloadPost);
+downloadStoryButton.addEventListener("click", downloadStory);
 
 // Modify image input to only accept specific file types
 imageInput.addEventListener("change", function () {
@@ -204,7 +207,7 @@ function generateGraphic() {
       document.getElementById("square-template-text").style.display = "block";
       document.getElementById("vertical-template-text").style.display = "block";
 
-      downloadButton.style.display = "block";
+      downloadButtons.style.display = "flex";
 
       generateButton.classList.remove("loading");
       generateButton.textContent = "Get My Graphics";
@@ -336,16 +339,18 @@ function applyMonoGrain(context, x, y, w, h) {
   context.putImageData(imageData, x, y);
 }
 
-function downloadImages() {
-  const verticalLink = document.createElement("a");
-  verticalLink.download = `Config2026_story.png`;
-  verticalLink.href = outputCanvasVertical.toDataURL("image/png", 1.0);
-  verticalLink.click();
-
+function downloadPost() {
   const squareLink = document.createElement("a");
   squareLink.download = `Config2026_post.png`;
   squareLink.href = outputCanvasSquare.toDataURL("image/png", 1.0);
   squareLink.click();
+}
+
+function downloadStory() {
+  const verticalLink = document.createElement("a");
+  verticalLink.download = `Config2026_story.png`;
+  verticalLink.href = outputCanvasVertical.toDataURL("image/png", 1.0);
+  verticalLink.click();
 }
 
 // Disable generate button until background images load

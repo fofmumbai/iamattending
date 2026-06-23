@@ -168,6 +168,24 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.download-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.download-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0;
+}
+
+.download-buttons button svg {
+  flex-shrink: 0;
+}
+
 #canvas {
   display: none;
 }
